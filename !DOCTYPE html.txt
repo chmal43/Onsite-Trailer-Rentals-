@@ -1,71 +1,696 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Contactless Trailer Rentals</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100 text-gray-900">
+import React, { useMemo, useState } from "react";
+import { motion } from "framer-motion";
+import {
+  Calendar,
+  CheckCircle2,
+  Copy,
+  CreditCard,
+  FileText,
+  KeyRound,
+  MapPin,
+  Phone,
+  Shield,
+  Truck,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-<header class="bg-white shadow p-4 flex justify-between">
-  <h1 class="text-xl font-bold">Contactless Trailer Rentals</h1>
-  <a href="#reserve" class="bg-blue-600 text-white px-4 py-2 rounded">Reserve</a>
-</header>
+/**
+ * Single-file marketing + booking request site.
+ * Swap the placeholder content with your business details.
+ *
+ * To make this truly contactless end-to-end:
+ * - Connect payments (Stripe)
+ * - E-sign waivers (HelloSign/Dropbox Sign)
+ * - Identity verification (optional)
+ * - Smart lockbox code delivery (SMS via Twilio)
+ * - Reservation calendar + inventory (Airtable/Supabase)
+ */
 
-<section class="p-8 text-center">
-  <h2 class="text-3xl font-bold">Reserve. Pay. Pick up. No counter.</h2>
-  <p class="mt-2">100% contactless trailer rentals in Huntersville, NC</p>
-</section>
+const BRAND = {
+  name: "Contactless Trailer Rentals",
+  tagline: "Reserve. Pay. Pick up. All without paperwork.",
+  phone: "(845) 820-2526",
+  email: "chmal43@gmail.com",
+  pickup: "Huntersville, NC",
+  hours: "Mon–Sat 8am–6pm",
+};
 
-<section class="p-8 grid md:grid-cols-3 gap-6">
-  <div class="bg-white p-4 rounded shadow">
-    <h3 class="font-bold">6x12 Utility Trailer</h3>
-    <p>$49/day</p>
-  </div>
-  <div class="bg-white p-4 rounded shadow">
-    <h3 class="font-bold">6x12 Enclosed Trailer</h3>
-    <p>$79/day</p>
-  </div>
-  <div class="bg-white p-4 rounded shadow">
-    <h3 class="font-bold">Car Hauler</h3>
-    <p>$89/day</p>
-  </div>
-</section>
+const TRAILERS = [
+  {
+    id: "utility-6x12",
+    name: "6x12 Utility Trailer",
+    price: "$49/day",
+    capacity: "Perfect for moving, landscaping, dump runs",
+    features: ["Ramp gate", "Tie-down points", "LED lights"],
+  },
+  {
+    id: "enclosed-6x12",
+    name: "6x12 Enclosed Trailer",
+    price: "$79/day",
+    capacity: "Dry, secure hauling for gear & furniture",
+    features: ["Lockable door", "E-track", "Interior light"],
+  },
+  {
+    id: "car-hauler",
+    name: "Car Hauler",
+    price: "$89/day",
+    capacity: "Tow vehicles safely with straps",
+    features: ["Steel ramps", "Wheel straps", "Breakaway kit"],
+  },
+];
 
-<section id="reserve" class="p-8 bg-white">
-  <h2 class="text-2xl font-bold mb-4">Reserve a Trailer</h2>
-  <form onsubmit="sendRequest(); return false;" class="grid gap-4 max-w-md">
-    <input id="name" placeholder="Full Name" class="border p-2 rounded" required>
-    <input id="phone" placeholder="Phone" class="border p-2 rounded" required>
-    <input id="email" placeholder="Email" class="border p-2 rounded" required>
-    <select id="trailer" class="border p-2 rounded">
-      <option>6x12 Utility Trailer</option>
-      <option>6x12 Enclosed Trailer</option>
-      <option>Car Hauler</option>
-    </select>
-    <input type="date" id="start" class="border p-2 rounded" required>
-    <input type="date" id="end" class="border p-2 rounded" required>
-    <button class="bg-blue-600 text-white p-2 rounded">Send Request</button>
-  </form>
-</section>
+const FAQ = [
+  {
+    q: "How does contactless pickup work?",
+    a: "Reserve online, upload your info, and you’ll receive pickup instructions and a lockbox code (or keypad code) at your scheduled time.",
+  },
+  {
+    q: "What do I need to rent?",
+    a: "A valid driver’s license, a towing vehicle with the right hitch/ball, and proof of auto insurance. We’ll confirm by upload during checkout.",
+  },
+  {
+    q: "Is insurance included?",
+    a: "We require renters to have their own auto insurance. Optional damage coverage may be available depending on trailer type and booking.",
+  },
+  {
+    q: "What happens if I’m running late?",
+    a: "No problem—your reservation window includes a grace period. If you’ll be very late, message us so we can keep everything ready.",
+  },
+];
 
-<script>
-function sendRequest(){
-  const msg = `Trailer Rental Request:
-Name: ${name.value}
-Phone: ${phone.value}
-Email: ${email.value}
-Trailer: ${trailer.value}
-From: ${start.value}
-To: ${end.value}`;
-  window.location.href = "mailto:your@email.com?subject=Trailer Rental&body=" + encodeURIComponent(msg);
+function cn(...classes) {
+  return classes.filter(Boolean).join(" ");
 }
-</script>
 
-<footer class="p-4 text-center text-sm text-gray-500">
-  © 2026 Contactless Trailer Rentals
-</footer>
+function Stat({ icon: Icon, label, value }) {
+  return (
+    <div className="flex items-center gap-3 rounded-2xl border bg-background/60 p-4 shadow-sm">
+      <div className="rounded-2xl border p-3">
+        <Icon className="h-5 w-5" />
+      </div>
+      <div>
+        <div className="text-sm text-muted-foreground">{label}</div>
+        <div className="text-base font-semibold">{value}</div>
+      </div>
+    </div>
+  );
+}
 
-</body>
-</html>
+function Step({ icon: Icon, title, text }) {
+  return (
+    <Card className="rounded-2xl">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <span className="rounded-2xl border p-2">
+            <Icon className="h-5 w-5" />
+          </span>
+          {title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="text-sm text-muted-foreground">{text}</CardContent>
+    </Card>
+  );
+}
+
+function TrailerCard({ trailer, onSelect }) {
+  return (
+    <Card className="group rounded-2xl overflow-hidden">
+      <CardHeader className="space-y-2">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <CardTitle className="text-xl">{trailer.name}</CardTitle>
+            <div className="mt-1 text-sm text-muted-foreground">{trailer.capacity}</div>
+          </div>
+          <Badge className="rounded-xl text-base px-3 py-1">{trailer.price}</Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <ul className="grid gap-2 text-sm">
+          {trailer.features.map((f) => (
+            <li key={f} className="flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4" />
+              <span className="text-muted-foreground">{f}</span>
+            </li>
+          ))}
+        </ul>
+        <Button
+          className="w-full rounded-2xl"
+          variant="default"
+          onClick={() => onSelect(trailer)}
+        >
+          Reserve this trailer
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+function useMailtoTemplate() {
+  return useMemo(() => {
+    const subject = encodeURIComponent(`Trailer Rental Request - ${BRAND.name}`);
+    return {
+      subject,
+      baseBody: (payload) =>
+        encodeURIComponent(
+          [
+            `Name: ${payload.fullName}`,
+            `Phone: ${payload.phone}`,
+            `Email: ${payload.email}`,
+            `Trailer: ${payload.trailerName}`,
+            `Pickup date: ${payload.pickupDate}`,
+            `Return date: ${payload.returnDate}`,
+            `Preferred pickup time: ${payload.pickupTime}`,
+            `Notes: ${payload.notes || ""}`,
+            "---",
+            "Contactless checklist:",
+            "- Driver license upload needed",
+            "- Proof of auto insurance upload needed",
+            "- Towing vehicle details (hitch/ball size)",
+          ].join("\n")
+        ),
+    };
+  }, []);
+}
+
+function ContactlessSite() {
+  const [selected, setSelected] = useState(TRAILERS[0]);
+  const [status, setStatus] = useState({ copied: false });
+
+  const [form, setForm] = useState({
+    fullName: "",
+    phone: "",
+    email: "",
+    trailerId: TRAILERS[0].id,
+    pickupDate: "",
+    returnDate: "",
+    pickupTime: "",
+    notes: "",
+  });
+
+  const mail = useMailtoTemplate();
+
+  const trailerById = useMemo(() => {
+    const map = new Map(TRAILERS.map((t) => [t.id, t]));
+    return map;
+  }, []);
+
+  const trailerName = trailerById.get(form.trailerId)?.name ?? selected.name;
+
+  const payload = useMemo(
+    () => ({ ...form, trailerName }),
+    [form, trailerName]
+  );
+
+  const mailtoHref = useMemo(() => {
+    const body = mail.baseBody(payload);
+    return `mailto:${BRAND.email}?subject=${mail.subject}&body=${body}`;
+  }, [mail, payload]);
+
+  const smsText = useMemo(() => {
+    const lines = [
+      `Trailer Rental Request (${BRAND.name})`,
+      `Name: ${payload.fullName}`,
+      `Phone: ${payload.phone}`,
+      `Trailer: ${payload.trailerName}`,
+      `Pickup: ${payload.pickupDate} ${payload.pickupTime}`,
+      `Return: ${payload.returnDate}`,
+      payload.notes ? `Notes: ${payload.notes}` : "",
+    ].filter(Boolean);
+    return lines.join(" | ");
+  }, [payload]);
+
+  const telHref = `tel:${BRAND.phone.replace(/[^0-9+]/g, "")}`;
+  const smsHref = `sms:${BRAND.phone.replace(/[^0-9+]/g, "")}?&body=${encodeURIComponent(
+    smsText
+  )}`;
+
+  function onSelectTrailer(t) {
+    setSelected(t);
+    setForm((f) => ({ ...f, trailerId: t.id }));
+    document.getElementById("reserve")?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  async function copyReservationSummary() {
+    const summary = [
+      `${BRAND.name} - Rental Request`,
+      `Name: ${payload.fullName}`,
+      `Phone: ${payload.phone}`,
+      `Email: ${payload.email}`,
+      `Trailer: ${payload.trailerName}`,
+      `Pickup: ${payload.pickupDate} ${payload.pickupTime}`,
+      `Return: ${payload.returnDate}`,
+      payload.notes ? `Notes: ${payload.notes}` : "",
+    ].filter(Boolean);
+
+    try {
+      await navigator.clipboard.writeText(summary.join("\n"));
+      setStatus({ copied: true });
+      setTimeout(() => setStatus({ copied: false }), 1500);
+    } catch {
+      // ignore
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 text-foreground">
+      {/* Top bar */}
+      <div className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-3">
+            <div className="rounded-2xl border p-2 shadow-sm">
+              <Truck className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="font-semibold leading-tight">{BRAND.name}</div>
+              <div className="text-xs text-muted-foreground">{BRAND.pickup}</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button asChild className="rounded-2xl" variant="outline">
+              <a href={telHref}>
+                <Phone className="mr-2 h-4 w-4" /> Call
+              </a>
+            </Button>
+            <Button asChild className="rounded-2xl">
+              <a href="#reserve">
+                <Calendar className="mr-2 h-4 w-4" /> Reserve
+              </a>
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Hero */}
+      <div className="mx-auto max-w-6xl px-4 py-12">
+        <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="space-y-6"
+          >
+            <Badge className="rounded-xl px-3 py-1">Contactless pickup & return</Badge>
+            <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
+              {BRAND.tagline}
+            </h1>
+            <p className="text-base text-muted-foreground sm:text-lg">
+              Book a trailer in minutes. Upload your info, receive pickup instructions,
+              and hit the road—no counter, no waiting.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Button className="rounded-2xl" asChild>
+                <a href="#trailers">
+                  <Truck className="mr-2 h-4 w-4" /> View trailers
+                </a>
+              </Button>
+              <Button className="rounded-2xl" variant="outline" asChild>
+                <a href="#how-it-works">
+                  <KeyRound className="mr-2 h-4 w-4" /> How it works
+                </a>
+              </Button>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              <Stat icon={MapPin} label="Pickup" value={BRAND.pickup} />
+              <Stat icon={Shield} label="Verified" value="License & insurance" />
+              <Stat icon={CreditCard} label="Payments" value="Card / invoice" />
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.05 }}
+          >
+            <Card className="rounded-2xl shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-xl">Fast rental request</CardTitle>
+                <div className="text-sm text-muted-foreground">
+                  We’ll confirm availability and send payment + pickup instructions.
+                </div>
+              </CardHeader>
+              <CardContent className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label>Choose trailer</Label>
+                  <Select
+                    value={form.trailerId}
+                    onValueChange={(v) =>
+                      setForm((f) => ({ ...f, trailerId: v }))
+                    }
+                  >
+                    <SelectTrigger className="rounded-2xl">
+                      <SelectValue placeholder="Select a trailer" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TRAILERS.map((t) => (
+                        <SelectItem key={t.id} value={t.id}>
+                          {t.name} ({t.price})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="grid gap-2">
+                    <Label htmlFor="pickupDate">Pickup date</Label>
+                    <Input
+                      id="pickupDate"
+                      type="date"
+                      className="rounded-2xl"
+                      value={form.pickupDate}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, pickupDate: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="returnDate">Return date</Label>
+                    <Input
+                      id="returnDate"
+                      type="date"
+                      className="rounded-2xl"
+                      value={form.returnDate}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, returnDate: e.target.value }))
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="grid gap-2">
+                    <Label htmlFor="name">Full name</Label>
+                    <Input
+                      id="name"
+                      placeholder="Your name"
+                      className="rounded-2xl"
+                      value={form.fullName}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, fullName: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="phone">Phone</Label>
+                    <Input
+                      id="phone"
+                      placeholder="(###) ###-####"
+                      className="rounded-2xl"
+                      value={form.phone}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, phone: e.target.value }))
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="grid gap-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="you@email.com"
+                      className="rounded-2xl"
+                      value={form.email}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, email: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="pickupTime">Preferred pickup time</Label>
+                    <Input
+                      id="pickupTime"
+                      placeholder="e.g. 10:30am"
+                      className="rounded-2xl"
+                      value={form.pickupTime}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, pickupTime: e.target.value }))
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="notes">Notes (optional)</Label>
+                  <Textarea
+                    id="notes"
+                    placeholder="What are you hauling? Need a specific ball size?"
+                    className="rounded-2xl"
+                    value={form.notes}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, notes: e.target.value }))
+                    }
+                  />
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <Button asChild className="rounded-2xl">
+                    <a href={mailtoHref}>
+                      <FileText className="mr-2 h-4 w-4" /> Email request
+                    </a>
+                  </Button>
+                  <Button asChild className="rounded-2xl" variant="outline">
+                    <a href={smsHref}>
+                      <Phone className="mr-2 h-4 w-4" /> Text request
+                    </a>
+                  </Button>
+                  <Button
+                    className="rounded-2xl"
+                    variant="outline"
+                    onClick={copyReservationSummary}
+                  >
+                    <Copy className="mr-2 h-4 w-4" />
+                    {status.copied ? "Copied" : "Copy"}
+                  </Button>
+                </div>
+
+                <div className="text-xs text-muted-foreground">
+                  By requesting a rental, you agree you will provide valid driver’s
+                  license + proof of insurance before pickup.
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Trailers */}
+      <div id="trailers" className="mx-auto max-w-6xl px-4 py-10">
+        <div className="flex items-end justify-between gap-6">
+          <div>
+            <h2 className="text-3xl font-semibold tracking-tight">Available trailers</h2>
+            <p className="mt-2 text-muted-foreground">
+              Transparent pricing, clean equipment, easy pickup.
+            </p>
+          </div>
+          <Badge className="rounded-xl hidden sm:inline-flex">{BRAND.hours}</Badge>
+        </div>
+
+        <div className="mt-6 grid gap-5 md:grid-cols-3">
+          {TRAILERS.map((t) => (
+            <TrailerCard key={t.id} trailer={t} onSelect={onSelectTrailer} />
+          ))}
+        </div>
+      </div>
+
+      {/* How it works */}
+      <div id="how-it-works" className="mx-auto max-w-6xl px-4 py-10">
+        <h2 className="text-3xl font-semibold tracking-tight">How it works</h2>
+        <p className="mt-2 text-muted-foreground">
+          A simple flow built for after-hours and zero waiting.
+        </p>
+
+        <div className="mt-6 grid gap-5 md:grid-cols-3">
+          <Step
+            icon={Calendar}
+            title="1) Reserve"
+            text="Choose your trailer and dates. Submit a request online in under 2 minutes."
+          />
+          <Step
+            icon={CreditCard}
+            title="2) Pay"
+            text="We send an invoice link. Pay by card and you’re confirmed."
+          />
+          <Step
+            icon={KeyRound}
+            title="3) Pick up"
+            text="Receive pickup location + lockbox code and a quick walkaround checklist."
+          />
+        </div>
+
+        <div className="mt-6 grid gap-5 md:grid-cols-3">
+          <Step
+            icon={Shield}
+            title="Verify"
+            text="Upload your driver’s license + proof of insurance before pickup."
+          />
+          <Step
+            icon={CheckCircle2}
+            title="Tow & return"
+            text="Return it to the same spot. Drop keys in the lockbox. Done."
+          />
+          <Step
+            icon={FileText}
+            title="Digital paperwork"
+            text="Waiver + rental agreement are signed electronically—no printing."
+          />
+        </div>
+      </div>
+
+      {/* Reserve section (anchor) */}
+      <div id="reserve" className="mx-auto max-w-6xl px-4 py-10">
+        <Card className="rounded-2xl">
+          <CardHeader>
+            <CardTitle className="text-2xl">Reserve now</CardTitle>
+            <div className="text-sm text-muted-foreground">
+              Selected: <span className="font-medium text-foreground">{selected.name}</span>
+            </div>
+          </CardHeader>
+          <CardContent className="grid gap-6 md:grid-cols-2 md:items-start">
+            <div className="space-y-3">
+              <div className="rounded-2xl border p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-semibold">Pickup location</div>
+                    <div className="text-sm text-muted-foreground">{BRAND.pickup}</div>
+                  </div>
+                  <div className="rounded-2xl border p-2">
+                    <MapPin className="h-5 w-5" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border p-4">
+                <div className="font-semibold">What you’ll need</div>
+                <ul className="mt-2 grid gap-2 text-sm text-muted-foreground">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4" /> Driver’s license
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4" /> Proof of auto insurance
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4" /> Proper hitch/ball + wiring
+                  </li>
+                </ul>
+              </div>
+
+              <div className="text-sm text-muted-foreground">
+                Prefer a custom setup (multiple trailers, weekly rates, delivery)?
+                Text or call and we’ll make it happen.
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Button className="rounded-2xl" asChild>
+                  <a href={telHref}>
+                    <Phone className="mr-2 h-4 w-4" /> Call {BRAND.phone}
+                  </a>
+                </Button>
+                <Button className="rounded-2xl" variant="outline" asChild>
+                  <a href={smsHref}>
+                    <Phone className="mr-2 h-4 w-4" /> Text us
+                  </a>
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="rounded-2xl border p-4">
+                <div className="font-semibold">Quick booking tip</div>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  If you want this to function like a full checkout, connect this form to
+                  a database (Airtable/Supabase) and add Stripe payment. I can wire that
+                  up next.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border p-4">
+                <div className="font-semibold">Current selection</div>
+                <div className="mt-2 text-sm text-muted-foreground">{trailerName}</div>
+              </div>
+
+              <div className="rounded-2xl border p-4">
+                <div className="font-semibold">Send your request</div>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Use the buttons at the top form to email/text your request.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* FAQ */}
+      <div className="mx-auto max-w-6xl px-4 py-10">
+        <h2 className="text-3xl font-semibold tracking-tight">FAQ</h2>
+        <div className="mt-6 grid gap-5 md:grid-cols-2">
+          {FAQ.map((item) => (
+            <Card key={item.q} className="rounded-2xl">
+              <CardHeader>
+                <CardTitle className="text-lg">{item.q}</CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm text-muted-foreground">{item.a}</CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="border-t bg-background/60">
+        <div className="mx-auto max-w-6xl px-4 py-10">
+          <div className="grid gap-6 md:grid-cols-3">
+            <div className="space-y-2">
+              <div className="font-semibold">{BRAND.name}</div>
+              <div className="text-sm text-muted-foreground">{BRAND.tagline}</div>
+              <div className="text-sm text-muted-foreground">{BRAND.hours}</div>
+            </div>
+            <div className="space-y-2">
+              <div className="font-semibold">Contact</div>
+              <div className="text-sm">
+                <a className="underline" href={telHref}>
+                  {BRAND.phone}
+                </a>
+              </div>
+              <div className="text-sm">
+                <a className="underline" href={`mailto:${BRAND.email}`}>
+                  {BRAND.email}
+                </a>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="font-semibold">Pickup</div>
+              <div className="text-sm text-muted-foreground">{BRAND.pickup}</div>
+              <div className="text-xs text-muted-foreground">
+                *Replace with your exact address after you’re ready to go live.
+              </div>
+            </div>
+          </div>
+          <div className="mt-8 text-xs text-muted-foreground">
+            © {new Date().getFullYear()} {BRAND.name}. All rights reserved.
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function Page() {
+  return <ContactlessSite />;
+}
+
+
