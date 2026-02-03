@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Contactless Trailer Rentals</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-900">
+
+<header class="bg-white shadow p-4 flex justify-between">
+  <h1 class="text-xl font-bold">Contactless Trailer Rentals</h1>
+  <a href="#reserve" class="bg-blue-600 text-white px-4 py-2 rounded">Reserve</a>
+</header>
+
+<section class="p-8 text-center">
+  <h2 class="text-3xl font-bold">Reserve. Pay. Pick up. No counter.</h2>
+  <p class="mt-2">100% contactless trailer rentals in Huntersville, NC</p>
+</section>
+
+<section class="p-8 grid md:grid-cols-3 gap-6">
+  <div class="bg-white p-4 rounded shadow">
+    <h3 class="font-bold">6x12 Utility Trailer</h3>
+    <p>$49/day</p>
+  </div>
+  <div class="bg-white p-4 rounded shadow">
+    <h3 class="font-bold">6x12 Enclosed Trailer</h3>
+    <p>$79/day</p>
+  </div>
+  <div class="bg-white p-4 rounded shadow">
+    <h3 class="font-bold">Car Hauler</h3>
+    <p>$89/day</p>
+  </div>
+</section>
+
+<section id="reserve" class="p-8 bg-white">
+  <h2 class="text-2xl font-bold mb-4">Reserve a Trailer</h2>
+  <form onsubmit="sendRequest(); return false;" class="grid gap-4 max-w-md">
+    <input id="name" placeholder="Full Name" class="border p-2 rounded" required>
+    <input id="phone" placeholder="Phone" class="border p-2 rounded" required>
+    <input id="email" placeholder="Email" class="border p-2 rounded" required>
+    <select id="trailer" class="border p-2 rounded">
+      <option>6x12 Utility Trailer</option>
+      <option>6x12 Enclosed Trailer</option>
+      <option>Car Hauler</option>
+    </select>
+    <input type="date" id="start" class="border p-2 rounded" required>
+    <input type="date" id="end" class="border p-2 rounded" required>
+    <button class="bg-blue-600 text-white p-2 rounded">Send Request</button>
+  </form>
+</section>
+
+<script>
+function sendRequest(){
+  const msg = `Trailer Rental Request:
+Name: ${name.value}
+Phone: ${phone.value}
+Email: ${email.value}
+Trailer: ${trailer.value}
+From: ${start.value}
+To: ${end.value}`;
+  window.location.href = "mailto:your@email.com?subject=Trailer Rental&body=" + encodeURIComponent(msg);
+}
+</script>
+
+<footer class="p-4 text-center text-sm text-gray-500">
+  © 2026 Contactless Trailer Rentals
+</footer>
+
+</body>
+</html>
